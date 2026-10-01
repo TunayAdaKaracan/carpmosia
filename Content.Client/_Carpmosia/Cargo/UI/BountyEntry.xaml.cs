@@ -5,10 +5,8 @@ namespace Content.Client.Cargo.UI;
 
 public sealed partial class BountyEntry
 {
-    // Carpmosia-start - Cargo bookkeeping
     public Action? OnClaimButtonPressed;
     public Action<CargoBountyData.CargoBountyStatus>? OnDeliveryStatusChanged;
-    // Carpmosia-end - Cargo bookkeeping
 
     private void InitializeCargoBookkeeping(CargoBountyData bounty)
     {

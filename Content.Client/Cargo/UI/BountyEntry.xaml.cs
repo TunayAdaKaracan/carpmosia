@@ -25,7 +25,7 @@ public sealed partial class BountyEntry : BoxContainer
     {
         RobustXamlLoader.Load(this);
         IoCManager.InjectDependencies(this);
-        InitializeCargoBookkeeping(bounty);
+        InitializeCargoBookkeeping(bounty); // Carpmosia-edit - Cargo bookkeeping
 
         UntilNextSkip = untilNextSkip;
 
