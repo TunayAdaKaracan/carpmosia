@@ -32,6 +32,7 @@ public sealed partial class CargoSystem
     [Dependency] private EntityQuery<StackComponent> _stackQuery = default!;
     [Dependency] private EntityQuery<ContainerManagerComponent> _containerManagerQuery = default!;
     [Dependency] private EntityQuery<CargoBountyLabelComponent> _cargoBountyLabelQuery = default!;
+    [Dependency] private EntityQuery<SolutionComponent> _solutionQuery = default!; // Carpmosia-edit - Cargo reagent bounties
 
     private static readonly ProtoId<NameIdentifierGroupPrototype> BountyNameIdentifierGroup = "Bounty";
 
@@ -392,7 +393,7 @@ public sealed partial class CargoSystem
 
         foreach (var ent in entities)
         {
-            if (!TryComp<SolutionComponent>(ent, out var solution))
+            if (!_solutionQuery.TryComp(ent, out var solution))
                 continue;
 
             foreach (var reagent in solution.Solution.Contents)
