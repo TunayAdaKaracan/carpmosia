@@ -1,3 +1,5 @@
+using Content.Shared.Chemistry.Reagent; // Carpmosia-edit - Cargo reagent bounties
+using Content.Shared.FixedPoint; // Carpmosia-edit - Cargo reagent bounties
 using Content.Shared.Whitelist;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -32,8 +34,16 @@ public sealed partial class CargoBountyPrototype : IPrototype
     /// <summary>
     /// The entries that must be satisfied for the cargo bounty to be complete.
     /// </summary>
-    [DataField(required: true)]
+    [DataField] // Carpmosia-edit - Cargo reagent bounties
     public List<CargoBountyItemEntry> Entries = new();
+
+    // Carpmosia-start - Cargo reagent bounties
+    /// <summary>
+    /// Reagent amounts required to complete this bounty
+    /// </summary>
+    [DataField]
+    public Dictionary<ProtoId<ReagentPrototype>, FixedPoint2> Reagents = new ();
+    // Carpmosia-end - Cargo reagent bounties
 
     /// <summary>
     /// A prefix appended to the beginning of a bounty's ID.
