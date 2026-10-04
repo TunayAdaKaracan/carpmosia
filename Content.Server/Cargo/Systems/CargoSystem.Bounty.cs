@@ -399,7 +399,7 @@ public sealed partial class CargoSystem
             {
                 if(!mustHave.ContainsKey(reagent.Reagent.Prototype))
                     continue;
-                mustHave[reagent.Reagent.Prototype] -= reagent.Quantity.Int();
+                mustHave[reagent.Reagent.Prototype] -= reagent.Quantity;
             }
         }
 
