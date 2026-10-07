@@ -1,4 +1,4 @@
-﻿bounty-console-menu-title = Cargo bounty console
+bounty-console-menu-title = Cargo bounty console
 bounty-console-label-button-text = Print label
 bounty-console-skip-button-text = Skip
 # Carpmosia-start - Cargo bookkeeping
