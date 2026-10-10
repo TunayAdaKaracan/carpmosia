@@ -7,8 +7,8 @@ using Content.Shared.Cargo;
 using Content.Shared.Cargo.Components;
 using Content.Shared.Cargo.Prototypes;
 using Content.Shared.Chemistry.Components; // Carpmosia-edit - Cargo reagent bounties
-using Content.Shared.Chemistry.Reagent; // Carpmosia-edit - Cargo reagent bounties
 using Content.Shared.Database;
+using Content.Shared.FixedPoint; // Carpmosia-edit - Cargo reagent bounties
 using Content.Shared.Labels.EntitySystems;
 using Content.Shared.NameIdentifier;
 using Content.Shared.Paper;
@@ -119,11 +119,15 @@ public sealed partial class CargoSystem
         msg.AddMarkupOrThrow(Loc.GetString("bounty-manifest-header", ("id", bounty.Id)));
         msg.PushNewline();
         // Carpmosia-start - Cargo reagent bounties
-        if (prototype.Entries.Count > 0)
+        var itemEntries = prototype.Entries.OfType<CargoBountyItemEntry>().ToList();
+        var reagentEntries = prototype.Entries.OfType<CargoBountyReagentEntry>().ToList();
+
+        if (itemEntries.Count > 0)
         {
             msg.AddMarkupOrThrow(Loc.GetString("bounty-manifest-list-start"));
             msg.PushNewline();
-            foreach (var entry in prototype.Entries)
+
+            foreach (var entry in itemEntries)
             {
                 msg.AddMarkupOrThrow($"- {Loc.GetString("bounty-console-manifest-entry",
                     ("amount", entry.Amount),
@@ -132,17 +136,16 @@ public sealed partial class CargoSystem
             }
         }
 
-        if (prototype.Reagents.Count > 0)
+        if (reagentEntries.Count > 0)
         {
             msg.AddMarkupOrThrow(Loc.GetString("bounty-manifest-list-start-reagents"));
             msg.PushNewline();
-            foreach (var entry in prototype.Reagents)
+
+            foreach (var entry in reagentEntries)
             {
-                if(!ProtoMan.Resolve<ReagentPrototype>(entry.Key, out var reagent))
-                    continue;
                 msg.AddMarkupOrThrow($"- {Loc.GetString("bounty-console-manifest-entry-reagent",
-                    ("amount", entry.Value),
-                    ("reagent", reagent.LocalizedName))}");
+                    ("amount", entry.Amount),
+                    ("reagent", Loc.GetString(entry.Name)))}");
                 msg.PushNewline();
             }
         }
@@ -323,14 +326,16 @@ public sealed partial class CargoSystem
     }
 
     // Carpmosia-start - Cargo reagent bounties
-    public bool IsBountyComplete(EntityUid container, CargoBountyPrototype prototype, IEnumerable<CargoBountyItemEntry> entries)
+    public bool IsBountyComplete(EntityUid container, CargoBountyPrototype prototype, IEnumerable<CargoBountyEntry> entries)
     {
         return IsBountyComplete(container, prototype, entries, out _);
     }
 
-    public bool IsBountyComplete(EntityUid container, CargoBountyPrototype prototype, IEnumerable<CargoBountyItemEntry> entries, out HashSet<EntityUid> bountyEntities)
+    public bool IsBountyComplete(EntityUid container, CargoBountyPrototype prototype, IEnumerable<CargoBountyEntry> entries, out HashSet<EntityUid> bountyEntities)
     {
-        return IsBountyComplete(GetBountyEntities(container), entries, out bountyEntities) && IsBountyReagentsComplete(container, prototype);
+        var entities = GetBountyEntities(container);
+        var cargoBountyEntries = entries.ToList();
+        return IsBountyComplete(entities, cargoBountyEntries.OfType<CargoBountyItemEntry>(), out bountyEntities) && IsBountyReagentsComplete(entities, cargoBountyEntries.OfType<CargoBountyReagentEntry>());
     }
     // Carpmosia-end - Cargo reagent bounties
 
@@ -386,10 +391,14 @@ public sealed partial class CargoSystem
     }
 
     // Carpmosia-start - Cargo reagent bounties
-    private bool IsBountyReagentsComplete(EntityUid container, CargoBountyPrototype bountyPrototype)
+    private bool IsBountyReagentsComplete(HashSet<EntityUid> entities, IEnumerable<CargoBountyReagentEntry> reagentEntries)
     {
-        var entities = GetBountyEntities(container);
-        var mustHave = bountyPrototype.Reagents.ShallowClone();
+        var mustHave = reagentEntries
+            .GroupBy(entry => entry.Reagent)
+            .ToDictionary(
+                group => group.Key,
+                group => FixedPoint2.New(group.Sum(item => item.Amount))
+            );
 
         foreach (var ent in entities)
         {
@@ -400,11 +409,12 @@ public sealed partial class CargoSystem
             {
                 if(!mustHave.ContainsKey(reagent.Reagent.Prototype))
                     continue;
+
                 mustHave[reagent.Reagent.Prototype] -= reagent.Quantity;
             }
         }
 
-        return !mustHave.Values.Any(amount => amount > 0);
+        return !mustHave.Any(entry => entry.Value > 0);
     }
     // Carpmosia-end - Cargo reagent bounties
 

@@ -1,5 +1,5 @@
-using Content.Shared.Chemistry.Reagent; // Carpmosia-edit - Cargo reagent bounties
-using Content.Shared.FixedPoint; // Carpmosia-edit - Cargo reagent bounties
+// Carpmosia-rework - Cargo reagent bounties
+using Content.Shared.Chemistry.Reagent;
 using Content.Shared.Whitelist;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
@@ -34,16 +34,8 @@ public sealed partial class CargoBountyPrototype : IPrototype
     /// <summary>
     /// The entries that must be satisfied for the cargo bounty to be complete.
     /// </summary>
-    [DataField] // Carpmosia-edit - Cargo reagent bounties
-    public List<CargoBountyItemEntry> Entries = new();
-
-    // Carpmosia-start - Cargo reagent bounties
-    /// <summary>
-    /// Reagent amounts required to complete this bounty
-    /// </summary>
-    [DataField]
-    public Dictionary<ProtoId<ReagentPrototype>, FixedPoint2> Reagents = new ();
-    // Carpmosia-end - Cargo reagent bounties
+    [DataField(required: true)]
+    public List<CargoBountyEntry> Entries = new();
 
     /// <summary>
     /// A prefix appended to the beginning of a bounty's ID.
@@ -64,32 +56,45 @@ public sealed partial class CargoBountyPrototype : IPrototype
     public SpriteSpecifier? Sprite;
 }
 
-[DataDefinition, Serializable, NetSerializable]
-public readonly partial record struct CargoBountyItemEntry()
+[ImplicitDataDefinitionForInheritors]
+[Serializable, NetSerializable]
+public abstract partial class CargoBountyEntry
 {
     /// <summary>
-    /// A whitelist for determining what items satisfy the entry.
-    /// </summary>
-    [DataField(required: true)]
-    public EntityWhitelist Whitelist { get; init; } = default!;
-
-    /// <summary>
-    /// A blacklist that can be used to exclude items in the whitelist.
+    /// A player-facing name for the item.
     /// </summary>
     [DataField]
-    public EntityWhitelist? Blacklist { get; init; } = null;
-
-    // todo: implement some kind of simple generic condition system
+    public LocId Name = string.Empty;
 
     /// <summary>
     /// How much of the item must be present to satisfy the entry
     /// </summary>
     [DataField]
-    public int Amount { get; init; } = 1;
+    public int Amount = 1;
+}
+
+public sealed partial class CargoBountyItemEntry : CargoBountyEntry
+{
+    /// <summary>
+    /// A whitelist for determining what items satisfy the entry.
+    /// </summary>
+    [DataField(required: true)]
+    public EntityWhitelist Whitelist = default!;
 
     /// <summary>
-    /// A player-facing name for the item.
+    /// A blacklist that can be used to exclude items in the whitelist.
     /// </summary>
     [DataField]
-    public LocId Name { get; init; } = string.Empty;
+    public EntityWhitelist? Blacklist = null;
+
+    // todo: implement some kind of simple generic condition system
+}
+
+public sealed partial class CargoBountyReagentEntry : CargoBountyEntry
+{
+    /// <summary>
+    /// A reagent for determining what reagent satisfies the entry
+    /// </summary>
+    [DataField(required: true)]
+    public ProtoId<ReagentPrototype> Reagent = default!;
 }
